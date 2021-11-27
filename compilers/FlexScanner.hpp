@@ -1,8 +1,11 @@
 #pragma once
 
+// https://stackoverflow.com/questions/40663527/how-to-inherit-from-yyflexlexer
+#if !defined(yyFlexLexerOnce)
 #include <FlexLexer.h>
+#endif
 
-#include "Token.hpp"
+#include "parser.hpp"
 
 namespace utec {
 namespace compilers {
@@ -14,27 +17,8 @@ class FlexScanner : public yyFlexLexer {
   FlexScanner(std::istream* arg_yyin = nullptr,
               std::ostream* arg_yyout = nullptr)
       : yyFlexLexer(arg_yyin, arg_yyout) {}
-
-  Token query_token(){
-    if(last_token._lexema == "END")
-      last_token = get_token();
-    return last_token;
-  }
-
-  Token get_token() {
-    if(last_token._lexema != "END"){
-      Token token_copy = last_token;
-      last_token = Token();
-      return token_copy;
-    }
-    int value;
-    if ((value = yylex()) == 0) return Token();
-
-    return Token(yytext, (Categoria)value);
-  }
-
-  private:
-    Token last_token;
+  int lex(
+      Parser::semantic_type* yylval);  // note: this is the prototype we need
 };
 
 }  // namespace compilers

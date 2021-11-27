@@ -1,49 +1,51 @@
 %{
-#include "Enums.h"
+#include "parser.hpp"
+#include "FlexScanner.hpp"
+#define YY_DECL int utec::compilers::FlexScanner::lex(utec::compilers::Parser::semantic_type *yylval)
 int n = 1;
 %}
 
-%option noyywrap c++
+%option c++ interactive noyywrap noyylineno nodefault
 
 DIGITO  [0-9]
 LETRA   [a-zA-Z]
 %%
-entero return Categoria::ENTERO;
-retorno return Categoria::RETORNO;
-sin_tipo return Categoria::SIN_TIPO;
-mientras return Categoria::MIENTRAS;
-si return Categoria::SI;
-sino return Categoria::SINO;
-main return Categoria::MAIN;
 
-{LETRA}+  return Categoria::ID;
-[+-]?{DIGITO}+\.{DIGITO}*[[eE]{DIGITO}+]? return Categoria::NUM; 
-[+-]?{DIGITO}+ return Categoria::NUM;
+entero return Parser::token::ENTERO;
+retorno return Parser::token::RETORNO;
+sin_tipo return Parser::token::SIN_TIPO;
+mientras return Parser::token::MIENTRAS;
+si return Parser::token::SI;
+sino return Parser::token::SINO;
+main return Parser::token::MAIN;
 
-"+" return Categoria::ADDOP;
-"-" return Categoria::SUBOP;
-"*" return Categoria::MULOP;
-"/" return Categoria::DIVOP;
+{LETRA}+  return Parser::token::ID;
+[+-]?{DIGITO}+\.{DIGITO}*[[eE]{DIGITO}+]? return Parser::token::NUM; 
+[+-]?{DIGITO}+ return Parser::token::NUM;
 
-"<" return Categoria::RELOP;
-">" return Categoria::RELOP;
-"<=" return Categoria::RELOP;
-">=" return Categoria::RELOP;
-"==" return Categoria::RELOP;
-"!=" return Categoria::RELOP;
+"+" return Parser::token::ADDOP;
+"-" return Parser::token::SUBOP;
+"*" return Parser::token::MULOP;
+"/" return Parser::token::DIVOP;
 
-"=" return Categoria::IGUAL;
+"<" return Parser::token::RELOP;
+">" return Parser::token::RELOP;
+"<=" return Parser::token::RELOP;
+">=" return Parser::token::RELOP;
+"==" return Parser::token::RELOP;
+"!=" return Parser::token::RELOP;
 
-";" return Categoria::SEMICOLON;
-"," return Categoria::COLON;
-"(" return Categoria::OPPAR;
-")" return Categoria::CLPAR;
-"[" return Categoria::OPCOR;
-"]" return Categoria::CLCOR;
-"{" return Categoria::OPBRA;
-"}" return Categoria::CLBRA;
+"=" return Parser::token::IGUAL;
 
-"@" return Categoria::ERROR;
+";" return Parser::token::SEMICOLON;
+"," return Parser::token::COLON;
+"(" return Parser::token::OPPAR;
+")" return Parser::token::CLPAR;
+"[" return Parser::token::OPCOR;
+"]" return Parser::token::CLCOR;
+"{" return Parser::token::OPBRA;
+"}" return Parser::token::CLBRA;
+
 \n n++;
 
 [\/.\*].*[\*.\/]
@@ -54,6 +56,10 @@ main return Categoria::MAIN;
         if(c == '\n')
             n++;
 }
-
-.|\n
+[ \t]*		{}
+.		{ std::cout<<"Error\n"; std::cout << yytext << "(line " << n << ")\n"; std::cerr << "SCANNER \n"; /*yyerror("");*/ exit(1);	}
 %%
+
+int yyFlexLexer::yylex() {
+    throw std::runtime_error("Invalid call to yyFlexLexer::yylex()");
+}

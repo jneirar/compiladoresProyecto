@@ -3,10 +3,38 @@
 #include <strstream>
 
 #include "FlexScanner.hpp"
-#include "Parser.hpp"
+#include "parser.hpp"
 
 using namespace utec::compilers;
 
+class ParamTest : public testing::TestWithParam<std::pair<std::string, int>> {};
+
+TEST_P(ParamTest, basicTest) {
+  std::istrstream str(GetParam().first.c_str());
+
+  FlexScanner scanner{str, std::cerr};
+  int result = 0;
+  Parser parser{&scanner, &result};
+
+  parser.parse();
+  EXPECT_EQ(result, GetParam().second);
+}
+
+INSTANTIATE_TEST_SUITE_P(SimpleTest, ParamTest,
+                         testing::Values(
+                            std::make_pair(
+                                "entero variable;", 0),
+                            std::make_pair(
+                                "entero variable;\n"
+                                "entero variableDos;", 0),
+                            std::make_pair(
+                                "entero variable;\n"
+                                "entero array[5];", 0),
+                            std::make_pair(
+                                "entero factorial ( entero abc ) { }", 0)
+                                        ));
+
+/*
 class LexicTest : public testing::TestWithParam<std::pair<std::string, std::vector<Token>>>
 {
 };
@@ -36,7 +64,7 @@ INSTANTIATE_TEST_SUITE_P(LexicTest,
                                             std::vector<Token>{Token("a", Categoria::ID),
                                                                Token("=", Categoria::IGUAL),
                                                                Token("-2.7E4", Categoria::NUM)}),
-                             std::make_pair("a = b /* shouldn't be printed */c = d ",
+                             std::make_pair("a = b /* shouldn't be printed * /c = d ",
                                             std::vector<Token>{Token("a", Categoria::ID),
                                                                Token("=", Categoria::IGUAL),
                                                                Token("b", Categoria::ID),
@@ -124,7 +152,7 @@ INSTANTIATE_TEST_SUITE_P(LexicTest,
                                                                Token("0", Categoria::NUM),
                                                                Token(";", Categoria::SEMICOLON),
                                                                Token("}", Categoria::CLBRA)}),
-                             std::make_pair("a/* Este es un \n comentario \n multilínea\n*/",
+                             std::make_pair("a/* Este es un \n comentario \n multilínea\n* /",
                                             std::vector<Token>{Token("a", Categoria::ID)})));
 
 class SintacticTest : public testing::TestWithParam<std::pair<std::string, std::vector<std::string>>>
@@ -145,7 +173,7 @@ INSTANTIATE_TEST_SUITE_P(SintacticTest,
                              std::make_pair("entero var ;", std::vector<std::string>{}),
                              std::make_pair("entero array[5] ;", std::vector<std::string>()),
                              std::make_pair("entero array[5] = ;", std::vector<std::string>{"caracter = unexpected", "caracter = unexpected"})));
-
+*/
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
