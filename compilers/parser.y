@@ -28,34 +28,17 @@
 
 %start	input 
 
-%token ENTERO
-%token RETORNO
-%token SIN_TIPO
-%token MIENTRAS
-%token SI
-%token SINO
-%token MAIN
+%token ENTERO RETORNO SIN_TIPO MIENTRAS SI SINO MAIN
 
-%token ID
-%token NUM
+%token ID NUM
 
-%token ADDOP
-%token SUBOP
-%token MULOP
-%token DIVOP
+%token ADDOP SUBOP MULOP DIVOP
 
 %token RELOP
 
 %token IGUAL
 
-%token SEMICOLON
-%token COLON
-%token OPPAR
-%token CLPAR
-%token OPCOR
-%token CLCOR
-%token OPBRA
-%token CLBRA
+%token SEMICOLON COLON OPPAR CLPAR OPCOR CLCOR OPBRA CLBRA
 
 %%
 
@@ -74,8 +57,12 @@ lista_declaracion_p:
     |   /* vacío */
     ;
 declaracion:
-    fun_declaracion 
-    |   var_declaracion 
+    ENTERO ID declaracion_fact  
+    |   SIN_TIPO ID OPPAR params CLPAR sent_compuesta
+    ;
+declaracion_fact:
+    var_declaracion_p
+    |   OPPAR params CLPAR sent_compuesta
     ;
 var_declaracion:
     ENTERO ID var_declaracion_p
@@ -88,9 +75,9 @@ tipo:
     ENTERO
     |   SIN_TIPO
     ;
-fun_declaracion:
-    tipo ID OPPAR params CLPAR sent_compuesta
-    ;
+//fun_declaracion:
+//    tipo ID OPPAR params CLPAR sent_compuesta
+//    ;
 params:
     lista_params
     |   SIN_TIPO
@@ -212,5 +199,4 @@ lista_arg_p:
 
 void utec::compilers::Parser::error(const std::string& msg) {
     std::cerr << msg << " " /*<< yylineno*/ <<'\n';
-    exit(1);
 }
