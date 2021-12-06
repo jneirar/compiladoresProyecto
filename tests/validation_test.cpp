@@ -7,32 +7,35 @@
 
 using namespace utec::compilers;
 
-class ParamTest : public testing::TestWithParam<std::pair<std::string, int>> {};
+class ParamTest : public testing::TestWithParam<std::pair<std::string, int>>
+{
+};
 
-TEST_P(ParamTest, basicTest) {
-  std::istrstream str(GetParam().first.c_str());
+TEST_P(ParamTest, basicTest)
+{
+    std::istrstream str(GetParam().first.c_str());
 
-  FlexScanner scanner{str, std::cerr};
-  int result = 0;
-  Parser parser{&scanner, &result};
+    FlexScanner scanner{str, std::cerr};
+    int result = 0;
+    Parser parser{&scanner, &result};
 
-  parser.parse();
-  EXPECT_EQ(result, GetParam().second);
+    parser.parse();
+    EXPECT_EQ(result, GetParam().second);
 }
 
 INSTANTIATE_TEST_SUITE_P(SimpleTest, ParamTest,
                          testing::Values(
-                            std::make_pair(
-                                "entero variable;", 0),
-                            std::make_pair(
+                             std::make_pair(
+                                 "entero variable;", 0)
+                             /*,std::make_pair(
                                 "entero variable;\n"
-                                "entero variableDos;", 0),
-                            std::make_pair(
+                                "entero variableDos;", 0)
+                            ,std::make_pair(
                                 "entero variable;\n"
-                                "entero array[5];", 0),
-                            std::make_pair(
-                                "entero factorial ( entero abc ) { }", 0)
-                                        ));
+                                "entero array[5];", 0)
+                            ,std::make_pair(
+                                "entero factorial ( entero abc ) { }", 0)*/
+                             ));
 
 /*
 class LexicTest : public testing::TestWithParam<std::pair<std::string, std::vector<Token>>>

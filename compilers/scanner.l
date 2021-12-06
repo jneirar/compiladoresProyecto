@@ -1,8 +1,10 @@
 %{
 #include "parser.hpp"
 #include "FlexScanner.hpp"
+#include "Node.hpp"
 #define YY_DECL int utec::compilers::FlexScanner::lex(utec::compilers::Parser::semantic_type *yylval)
-int n = 1;
+extern int row;
+extern int col;
 %}
 
 %option c++ interactive noyywrap noyylineno nodefault
@@ -11,42 +13,42 @@ DIGITO  [0-9]
 LETRA   [a-zA-Z]
 %%
 
-entero return Parser::token::ENTERO;
-retorno return Parser::token::RETORNO;
-sin_tipo return Parser::token::SIN_TIPO;
-mientras return Parser::token::MIENTRAS;
-si return Parser::token::SI;
-sino return Parser::token::SINO;
-main return Parser::token::MAIN;
+entero {std::string text = yytext; col += text.size();  return Parser::token::ENTERO;}
+retorno {std::string text = yytext; col += text.size(); return Parser::token::RETORNO;}
+sin_tipo {std::string text = yytext; col += text.size(); return Parser::token::SIN_TIPO;}
+mientras {std::string text = yytext; col += text.size(); return Parser::token::MIENTRAS;}
+si {std::string text = yytext; col += text.size(); return Parser::token::SI;}
+sino {std::string text = yytext; col += text.size(); return Parser::token::SINO;}
+main {std::string text = yytext; col += text.size(); return Parser::token::MAIN;}
 
-{LETRA}+  return Parser::token::ID;
-[+-]?{DIGITO}+\.{DIGITO}*[[eE]{DIGITO}+]? return Parser::token::NUM; 
-[+-]?{DIGITO}+ return Parser::token::NUM;
+{LETRA}+ {std::string text = yytext; col += text.size(); return Parser::token::ID;}
+[+-]?{DIGITO}+\.{DIGITO}*[[eE]{DIGITO}+]? {std::string text = yytext; col += text.size(); return Parser::token::NUM;}
+[+-]?{DIGITO}+ {std::string text = yytext; col += text.size(); return Parser::token::NUM;}
 
-"+" return Parser::token::ADDOP;
-"-" return Parser::token::SUBOP;
-"*" return Parser::token::MULOP;
-"/" return Parser::token::DIVOP;
+"+" {col++; return Parser::token::ADDOP;}
+"-" {col++; return Parser::token::SUBOP;}
+"*" {col++; return Parser::token::MULOP;}
+"/" {col++; return Parser::token::DIVOP;}
 
-"<" return Parser::token::RELOP;
-">" return Parser::token::RELOP;
-"<=" return Parser::token::RELOP;
-">=" return Parser::token::RELOP;
-"==" return Parser::token::RELOP;
-"!=" return Parser::token::RELOP;
+"<" {col++; return Parser::token::RELOP;}
+">" {col++; return Parser::token::RELOP;}
+"<=" {col+=2; return Parser::token::RELOP;}
+">=" {col+=2; return Parser::token::RELOP;}
+"==" {col+=2; return Parser::token::RELOP;}
+"!=" {col+=2; return Parser::token::RELOP;}
 
-"=" return Parser::token::IGUAL;
+"=" {col++; return Parser::token::IGUAL;}
 
-";" return Parser::token::SEMICOLON;
-"," return Parser::token::COLON;
-"(" return Parser::token::OPPAR;
-")" return Parser::token::CLPAR;
-"[" return Parser::token::OPCOR;
-"]" return Parser::token::CLCOR;
-"{" return Parser::token::OPBRA;
-"}" return Parser::token::CLBRA;
+";" {col++; return Parser::token::SEMICOLON;}
+"," {col++; return Parser::token::COLON;}
+"(" {col++; return Parser::token::OPPAR;}
+")" {col++; return Parser::token::CLPAR;}
+"[" {col++; return Parser::token::OPCOR;}
+"]" {col++; return Parser::token::CLCOR;}
+"{" {col++; return Parser::token::OPBRA;}
+"}" {col++; return Parser::token::CLBRA;}
 
-\n n++;
+\n {row++; col = 1;}
 
 [\/.\*].*[\*.\/]
 
@@ -54,10 +56,11 @@ main return Parser::token::MAIN;
     std::string t = yytext;
     for(char c : t)
         if(c == '\n')
-            n++;
+            row++;
 }
-[ \t]*		{}
-.		{ std::cout<<"Error\n"; std::cout << yytext << "(line " << n << ")\n"; std::cerr << "SCANNER \n"; /*yyerror("");*/ exit(1);	}
+[ ]     {col++;}
+[\t]	{col += 4;}
+.		{ std::cout<<"Error\n"; std::cout << yytext << "(line " << row << " col " << col << ")\n"; std::cerr << "SCANNER \n"; /*yyerror("");*/ exit(1);	}
 %%
 
 int yyFlexLexer::yylex() {
