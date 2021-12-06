@@ -1,10 +1,11 @@
 %{
 #include "parser.hpp"
 #include "FlexScanner.hpp"
-#include "Node.hpp"
+#include "SymbolTable.hpp"
 #define YY_DECL int utec::compilers::FlexScanner::lex(utec::compilers::Parser::semantic_type *yylval)
 extern int row;
 extern int col;
+extern SymbolTable symbolTable;
 %}
 
 %option c++ interactive noyywrap noyylineno nodefault
@@ -21,7 +22,7 @@ si {std::string text = yytext; col += text.size(); return Parser::token::SI;}
 sino {std::string text = yytext; col += text.size(); return Parser::token::SINO;}
 main {std::string text = yytext; col += text.size(); return Parser::token::MAIN;}
 
-{LETRA}+ {std::string text = yytext; col += text.size(); return Parser::token::ID;}
+{LETRA}+ {std::string text = yytext; Symbol symbol(text, row, col); symbolTable.addSymbol(symbol); col += text.size(); return Parser::token::ID;}
 [+-]?{DIGITO}+\.{DIGITO}*[[eE]{DIGITO}+]? {std::string text = yytext; col += text.size(); return Parser::token::NUM;}
 [+-]?{DIGITO}+ {std::string text = yytext; col += text.size(); return Parser::token::NUM;}
 

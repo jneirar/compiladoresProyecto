@@ -4,9 +4,12 @@
 #include <cmath>
 #include <FlexLexer.h>
 #include "Node.hpp"
+#include "SymbolTable.hpp"
+
 int row = 1;
 int col = 1;
 Node* syntacticTree = nullptr;
+SymbolTable symbolTable;
 %}
 
 %require "3.5.1"
@@ -20,6 +23,8 @@ Node* syntacticTree = nullptr;
 %code requires
 {
     class Node;
+    class SymbolTable;
+    class Symbol;
     namespace utec::compilers {
         class FlexScanner;
     } // namespace utec::compilers
@@ -54,7 +59,7 @@ Node* syntacticTree = nullptr;
 %%
 
 input:		/* empty */ 
-		| programa  { $$ = new Node("input", $1); $$->printPreorder(); syntacticTree = $$; }
+		| programa  { $$ = new Node("input", $1); $$->printPreorder(); syntacticTree = $$; symbolTable.printSymbols(); }
 		;
 
 programa:  
@@ -187,7 +192,6 @@ lista_arg:
     lista_arg COLON expresion { $$ = new Node("lista_arg", $1, $3); }
     |   expresion { $$ = new Node("lista_arg", $1); }
     ;
-
 %%
 void utec::compilers::Parser::error(const std::string& msg) {
     std::cerr << msg << " " /*<< yylineno*/ <<'\n';
