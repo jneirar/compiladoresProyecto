@@ -6,6 +6,11 @@
 extern int row;
 extern int col;
 extern SymbolTable symbolTable;
+extern int numero;
+extern std::string texto;
+extern std::string tipo;
+extern std::string operacionRelop;
+extern std::string operacionArit;
 %}
 
 %option c++ interactive noyywrap noyylineno nodefault
@@ -14,29 +19,29 @@ DIGITO  [0-9]
 LETRA   [a-zA-Z]
 %%
 
-entero {std::string text = yytext; col += text.size();  return Parser::token::ENTERO;}
+entero {tipo = strdup(yytext); std::string text = yytext; col += text.size();  return Parser::token::ENTERO;}
 retorno {std::string text = yytext; col += text.size(); return Parser::token::RETORNO;}
-sin_tipo {std::string text = yytext; col += text.size(); return Parser::token::SIN_TIPO;}
+sin_tipo {tipo = strdup(yytext); std::string text = yytext; col += text.size(); return Parser::token::SIN_TIPO;}
 mientras {std::string text = yytext; col += text.size(); return Parser::token::MIENTRAS;}
 si {std::string text = yytext; col += text.size(); return Parser::token::SI;}
 sino {std::string text = yytext; col += text.size(); return Parser::token::SINO;}
 main {std::string text = yytext; col += text.size(); return Parser::token::MAIN;}
 
-{LETRA}+ {std::string text = yytext; Symbol symbol(text, row, col); symbolTable.addSymbol(symbol); col += text.size(); return Parser::token::ID;}
-[+-]?{DIGITO}+\.{DIGITO}*[[eE]{DIGITO}+]? {std::string text = yytext; col += text.size(); return Parser::token::NUM;}
-[+-]?{DIGITO}+ {std::string text = yytext; col += text.size(); return Parser::token::NUM;}
+{LETRA}+ {texto = strdup(yytext); std::string text = yytext; Symbol symbol(text, row, col); symbolTable.addSymbol(symbol); col += text.size(); return Parser::token::ID;}
+[+-]?{DIGITO}+\.{DIGITO}*[[eE]{DIGITO}+]? {numero = atoi(yytext); std::string text = yytext; col += text.size(); return Parser::token::NUM;}
+[+-]?{DIGITO}+ {numero = atoi(yytext); std::string text = yytext; col += text.size(); return Parser::token::NUM;}
 
-"+" {col++; return Parser::token::ADDOP;}
-"-" {col++; return Parser::token::SUBOP;}
-"*" {col++; return Parser::token::MULOP;}
-"/" {col++; return Parser::token::DIVOP;}
+"+" {operacionArit = strdup(yytext); col++; return Parser::token::ADDOP;}
+"-" {operacionArit = strdup(yytext); col++; return Parser::token::SUBOP;}
+"*" {operacionArit = strdup(yytext); col++; return Parser::token::MULOP;}
+"/" {operacionArit = strdup(yytext); col++; return Parser::token::DIVOP;}
 
-"<" {col++; return Parser::token::RELOP;}
-">" {col++; return Parser::token::RELOP;}
-"<=" {col+=2; return Parser::token::RELOP;}
-">=" {col+=2; return Parser::token::RELOP;}
-"==" {col+=2; return Parser::token::RELOP;}
-"!=" {col+=2; return Parser::token::RELOP;}
+"<" {operacionRelop = strdup(yytext); col++; return Parser::token::RELOP;}
+">" {operacionRelop = strdup(yytext); col++; return Parser::token::RELOP;}
+"<=" {operacionRelop = strdup(yytext); col+=2; return Parser::token::RELOP;}
+">=" {operacionRelop = strdup(yytext); col+=2; return Parser::token::RELOP;}
+"==" {operacionRelop = strdup(yytext); col+=2; return Parser::token::RELOP;}
+"!=" {operacionRelop = strdup(yytext); col+=2; return Parser::token::RELOP;}
 
 "=" {col++; return Parser::token::IGUAL;}
 
