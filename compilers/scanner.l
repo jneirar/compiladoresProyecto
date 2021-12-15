@@ -71,7 +71,7 @@ sino {std::string text = yytext; col += text.size(); return Parser::token::SINO;
 }
 [ ]     {col++;}
 [\t]	{col += 2;}
-.		{ std::cout<<"Error léxico\n"; std::cout << yytext << " (line " << row << " col " << col << ")\n"; }
+.		{ std::cout<<"Error léxico\n"; std::cout << yytext << " (line " << row << " col " << col << ")\n"; std::string text = yytext; col += text.size();  }
 %%
 
 int yyFlexLexer::yylex() {

@@ -15,6 +15,7 @@ public:
     std::string type;
     bool isArray = false;
     bool isFunction = false;
+    int size = 0;
 
     Symbol(std::string name, int row, int col) : name(name), row(row), col(col)
     {
@@ -27,6 +28,10 @@ class SymbolTable
 public:
     SymbolTable() {}
     virtual ~SymbolTable()
+    {
+        this->clear();
+    }
+    void clear()
     {
         for (auto &p : this->symbols)
         {
@@ -76,7 +81,7 @@ public:
                 std::cout << " isArray?: " << p.second->isArray;
                 if (p.second->isArray)
                 {
-                    std::cout << " size: ";
+                    std::cout << " size: " << p.second->size;
                 }
             }
             std::cout << "\n";

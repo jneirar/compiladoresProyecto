@@ -126,11 +126,16 @@ input:		/* empty */
                 errors.push_back("No existe una función main");
             }
             if(errors.size() > 0){
-                std::cout << "\n\tErrores:\n";
+                std::cout << "\n\tErrores semánticos:\n";
                 for(std::string &error: errors)
                     std::cout << error << "\n";
                 errors.clear();
             }
+            row = 1;
+            col = 1;
+            delete syntacticTree;
+            syntacticTree = nullptr;
+            symbolTable.clear();
         }
 		;
 
@@ -287,6 +292,8 @@ lista_arg:
     ;
 %%
 void utec::compilers::Parser::error(const std::string& msg) {
+    symbolTable.printSymbols(); 
+
     std::string error = "Error sintáctico en fila: " + std::to_string(row) + ", col: " + std::to_string(col);
     errors.push_back(error);
     std::cout << "Error sintáctico:\n";
@@ -294,4 +301,9 @@ void utec::compilers::Parser::error(const std::string& msg) {
         std::cout << "\t" << error << "\n";
     }
     errors.clear();
+    row = 1;
+    col = 1;
+    delete syntacticTree;
+    syntacticTree = nullptr;
+    symbolTable.clear();
 }

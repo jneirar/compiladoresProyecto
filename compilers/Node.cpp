@@ -259,6 +259,7 @@ void DeclaracionVarNode::print(std::string prev, int localScope)
         Symbol *&symbol = symbolTable.getSymbol(id);
         symbol->type = this->tipo;
         symbol->isArray = this->esArreglo;
+        symbol->size = this->size;
         if (symbol->scope.count(localScope))
             errors.push_back("Symbol " + id + " already declared");
         else

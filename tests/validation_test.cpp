@@ -15,6 +15,9 @@ TEST_P(ParamTest, basicTest)
 {
     std::istrstream str(GetParam().first.c_str());
 
+    std::cout << "\tCode:\n"
+              << GetParam().first.c_str() << "\n\n";
+
     FlexScanner scanner{str, std::cerr};
     int result = 0;
     Parser parser{&scanner, &result};
@@ -26,22 +29,48 @@ TEST_P(ParamTest, basicTest)
 INSTANTIATE_TEST_SUITE_P(SimpleTest, ParamTest,
                          testing::Values(
                              std::make_pair(
+                                 "@?",
+                                 0),
+                             std::make_pair(
+                                 "entero variable;\n"
+                                 "entero variableDos;",
+                                 0),
+                             std::make_pair(
+                                 "entero variable;\n"
+                                 "entero array[5];",
+                                 0),
+                             std::make_pair(
+                                 "entero factorial() {}", 0),
+                             std::make_pair(
                                  "sin_tipo main(sin_tipo) {\n"
-                                 "entero a;\n"
-                                 "entero a[4];\n"
+                                 "entero varA;\n"
+                                 "entero varB[6];\n"
+                                 "\n}",
+                                 0),
+                             std::make_pair(
+                                 "sin_tipo main(sin_tipo) {\n"
+                                 "entero varA;\n"
+                                 "varA = 2;\n"
+                                 "si(varA > 4)\n"
+                                 "varA = varA + 1;\n"
                                  "}\n",
-                                 0)
-                             /*,std::make_pair(
-                                "entero variable;\n"
-                                "entero variableDos;", 0)
-                            ,std::make_pair(
-                                "entero variable;\n"
-                                "entero array[5];", 0)
-                            ,std::make_pair(
-                                "entero factorial ( entero abc ) { }", 0)*/
-                             ));
+                                 0),
+                             std::make_pair(
+                                 "sin_tipo main(sin_tipo) {\n"
+                                 "mientras(var > 31){\n"
+                                 "retorno;\n"
+                                 "}\n"
+                                 "}\n",
+                                 0),
+                             std::make_pair(
+                                 "entero main(entero varA) {\n"
+                                 "varB = varA;\n"
+                                 "retorno varB + varA;\n"
+                                 "}\n",
+                                 0)));
 
 /*
+Tests del analizador léxico previo a la utilización de bison.
 class LexicTest : public testing::TestWithParam<std::pair<std::string, std::vector<Token>>>
 {
 };
@@ -165,22 +194,8 @@ INSTANTIATE_TEST_SUITE_P(LexicTest,
 class SintacticTest : public testing::TestWithParam<std::pair<std::string, std::vector<std::string>>>
 {
 };
-
-TEST_P(SintacticTest, basicTest)
-{
-    std::istrstream str(GetParam().first.c_str());
-
-    Parser parser(str, std::cout);
-    EXPECT_EQ(parser.parse(), GetParam().second);
-}
-
-INSTANTIATE_TEST_SUITE_P(SintacticTest,
-                         SintacticTest,
-                         testing::Values(
-                             std::make_pair("entero var ;", std::vector<std::string>{}),
-                             std::make_pair("entero array[5] ;", std::vector<std::string>()),
-                             std::make_pair("entero array[5] = ;", std::vector<std::string>{"caracter = unexpected", "caracter = unexpected"})));
 */
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
