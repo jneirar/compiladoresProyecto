@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <unordered_map>
 #include <unordered_set>
@@ -6,58 +8,81 @@
 class Symbol
 {
 public:
-    Symbol() : name("") {}
-    Symbol(std::string name, int row, int col) : name(name), row(row), col(col) {}
-    std::string getName() { return this->name; }
-    int getRow() { return this->row; }
-    int getCol() { return this->col; }
-    void printSymbol()
-    {
-        std::cout << name << " Row: " << row << " Col: " << col << "\n";
-    }
-
-private:
     std::string name;
     int row;
     int col;
+    std::unordered_set<int> scope;
+    std::string type;
+    bool isArray = false;
+    bool isFunction = false;
+
+    Symbol(std::string name, int row, int col) : name(name), row(row), col(col)
+    {
+        type = "";
+    }
 };
 
 class SymbolTable
 {
 public:
     SymbolTable() {}
-    void addSymbol(Symbol symbol)
+    virtual ~SymbolTable()
     {
-        std::string name = symbol.getName();
+        for (auto &p : this->symbols)
+        {
+            delete p.second;
+            p.second = nullptr;
+        }
+        this->symbols.clear();
+    }
+    void addSymbol(Symbol *symbol)
+    {
+        std::string name = symbol->name;
         this->symbols[name] = symbol;
-        if (notValid.count(name))
-            notValid.erase(name);
     }
     bool isSymbol(std::string name)
     {
-        return symbols.count(name) && !notValid.count(name);
+        return symbols.count(name);
     }
-    void deleteSymbol(std::string name)
+    void deleteSymbol(std::string name, int scope)
     {
-        notValid.insert(name);
+        Symbol *&tmp = this->symbols[name];
+        tmp->scope.erase(scope);
     }
-    Symbol getSymbol(std::string name)
+
+    Symbol *&getSymbol(std::string name)
     {
-        if (notValid.count(name))
-            return Symbol();
         return symbols[name];
     }
     void printSymbols()
     {
         std::cout << "\tSymbols\n";
         for (auto p : symbols)
-            p.second.printSymbol();
-        std::cout << "\tSymbols not valids\n";
-        for (auto s : notValid)
-            std::cout << s << "\n";
+        {
+            std::cout << "Name: " << p.second->name;
+            std::cout << " Row: " << p.second->row;
+            std::cout << " Col: " << p.second->col;
+            std::cout << " Scope: ";
+            for (auto sc : p.second->scope)
+                std::cout << sc << " ";
+            if (p.second->isFunction)
+            {
+                std::cout << " es función";
+                std::cout << " Type: " << p.second->type;
+            }
+            else
+            {
+                std::cout << " Type: " << p.second->type;
+                std::cout << " isArray?: " << p.second->isArray;
+                if (p.second->isArray)
+                {
+                    std::cout << " size: ";
+                }
+            }
+            std::cout << "\n";
+        }
     }
 
 private:
-    std::unordered_map<std::string, Symbol> symbols;
-    std::unordered_set<std::string> notValid;
+    std::unordered_map<std::string, Symbol *> symbols;
 };

@@ -7,16 +7,14 @@
 #include "Node.cpp"
 #include "SymbolTable.hpp"
 #include <vector>
+#include <variant>
 
 int row = 1;
 int col = 1;
-int numero;
-std::string texto;
-std::string tipo;
-std::string operacionRelop;
-std::string operacionArit;
 ProgramaNode* syntacticTree = nullptr;
 SymbolTable symbolTable;
+
+std::vector<std::string> errors;
 %}
 
 %require "3.5.1"
@@ -79,8 +77,8 @@ SymbolTable symbolTable;
 %start	input 
 
 %token <std::string> ENTERO SIN_TIPO
-%token RETORNO MIENTRAS SI SINO MAIN
-%token <std::string> ID 
+%token RETORNO MIENTRAS SI SINO
+%token <std::string> ID
 %token <int> NUM
 %token <std::string> ADDOP SUBOP MULOP DIVOP
 %token <std::string> RELOP
@@ -119,7 +117,20 @@ SymbolTable symbolTable;
 %%
 
 input:		/* empty */ 
-		| programa  { syntacticTree = $1; syntacticTree->print(); //symbolTable.printSymbols();
+		| programa  { 
+            syntacticTree = $1; 
+            syntacticTree->print(); 
+            symbolTable.printSymbols(); 
+            
+            if(!symbolTable.isSymbol("main")){
+                errors.push_back("No existe una función main");
+            }
+            if(errors.size() > 0){
+                std::cout << "\n\tErrores:\n";
+                for(std::string &error: errors)
+                    std::cout << error << "\n";
+                errors.clear();
+            }
         }
 		;
 
@@ -134,14 +145,14 @@ declaracion:
     ENTERO ID declaracion_fact { 
         if($3->getEsVarNode()){
             if($3->getEsArreglo())
-                $$ = new DeclaracionVarNode(texto, $3->getSize()); 
+                $$ = new DeclaracionVarNode($<char*>2, $3->getSize()); 
             else
-                $$ = new DeclaracionVarNode(texto); 
+                $$ = new DeclaracionVarNode($<char*>2); 
         }else{
-            $$ = new DeclaracionFunNode(texto, tipo, $3->getParams(), $3->getSentCompuestaNode()); 
+            $$ = new DeclaracionFunNode($<char*>2, $<char*>1, $3->getParams(), $3->getSentCompuestaNode()); 
         }
     }
-    |   SIN_TIPO ID OPPAR params CLPAR sent_compuesta { $$ = new DeclaracionFunNode(texto, "sin_tipo", $4, $6); }
+    |   SIN_TIPO ID OPPAR params CLPAR sent_compuesta { $$ = new DeclaracionFunNode($<char*>2, $<char*>1, $4, $6); }
     ;
 declaracion_fact:
     var_declaracion_p { $$ = $1; }
@@ -149,28 +160,28 @@ declaracion_fact:
     ;
 var_declaracion:
     ENTERO ID var_declaracion_p { 
-        if($3->getEsArreglo()) $$ = new DeclaracionVarNode(texto, $3->getSize()); 
-        else $$ = new DeclaracionVarNode(texto); 
+        if($3->getEsArreglo()) $$ = new DeclaracionVarNode($<char*>2, $3->getSize()); 
+        else $$ = new DeclaracionVarNode($<char*>2); 
     }
     ;
 var_declaracion_p:
     SEMICOLON { $$ = new DeclaracionVarNodeAux(); }
-    |   OPCOR NUM CLCOR SEMICOLON { $$ = new DeclaracionVarNodeAux(numero); }
+    |   OPCOR NUM CLCOR SEMICOLON { $$ = new DeclaracionVarNodeAux($<int>2); }
     ;
 tipo:
-    ENTERO { $$ = tipo; }
-    |   SIN_TIPO { $$ = tipo; }
+    ENTERO { $$ = $<char*>1; }
+    |   SIN_TIPO { $$ = $<char*>1; }
     ;
 params:
     lista_params { $$ = $1; }
-    |   SIN_TIPO {}
+    |   SIN_TIPO { }
     ;
 lista_params:
     lista_params COLON param { $$ = $1; $$.push_back($3); }
     |   param { $$.push_back($1); }
     ;
 param:
-    tipo ID param_p { $$ = new ParamNode(texto, $1, $3->getArreglo()); }
+    tipo ID param_p { $$ = new ParamNode($<char*>2, $1, $3->getArreglo()); }
     ;
 param_p:
     OPCOR CLCOR { $$ = new ParamNodeAux(true); }
@@ -212,7 +223,7 @@ sentencia_retorno:
     ;
 sentencia_retorno_p:
     SEMICOLON { $$ = new SentenciaRetornoNode(); }
-    |   expresion SEMICOLON { std::cout << "Hola1\n"; $$ = new SentenciaRetornoNode($1); }
+    |   expresion SEMICOLON { $$ = new SentenciaRetornoNode($1); }
     ;
 expresion:
     var IGUAL expresion { 
@@ -221,10 +232,10 @@ expresion:
         else
             $$ = new ExpresionAsignacionNode($1->getId(), $3); 
     }
-    |   expresion_simple { std::cout << "Hola2\n"; $$ = $1; }
+    |   expresion_simple { $$ = $1; }
     ;
 var:
-    ID var_p { $$ = new VarNode(texto, $2); }
+    ID var_p { $$ = new VarNode($<char*>1, $2); }
     ;
 var_p:
     OPCOR expresion CLCOR { $$ = new VarNodeAux($2); }
@@ -241,7 +252,7 @@ expresion_simple:
     }
     ;
 expresion_simple_p:
-    RELOP expresion_aditiva {$$ = new ExpresionSimpleAux(operacionRelop, $2); }
+    RELOP expresion_aditiva {$$ = new ExpresionSimpleAux($<char*>1, $2); }
     |   /* vacío */ { $$ = new ExpresionSimpleAux(); }
     ;
 expresion_aditiva:
@@ -249,22 +260,22 @@ expresion_aditiva:
     |   term { $$ = new ExpresionAditiva($1); }
     ;
 addope:
-    ADDOP { $$ = operacionArit; }
-    |   SUBOP { $$ = operacionArit; }
+    ADDOP { $$ = $<char*>1; }
+    |   SUBOP { $$ = $<char*>1; }
     ;
 term:
     term mulope factor { $$ = new Term($1, $2, $3); }
     |   factor { $$ = new Term($1); }
     ;
 mulope:
-    MULOP { $$ = operacionArit; }
-    |   DIVOP { $$ = operacionArit; }
+    MULOP { $$ = $<char*>1; }
+    |   DIVOP { $$ = $<char*>1; }
     ;
 factor:
     OPPAR expresion CLPAR { $$ = new FactorExpresion($2); }
     |   var { $$ = new FactorVar($1); }
-    |   ID OPPAR args CLPAR { $$ = new FactorCall(texto, $3); }
-    |   NUM { $$ = new FactorNum(numero); }
+    |   ID OPPAR args CLPAR { $$ = new FactorCall($<char*>1, $3); }
+    |   NUM { $$ = new FactorNum($<int>1); }
     ;
 args:
     lista_arg { $$ = $1; }
@@ -276,5 +287,11 @@ lista_arg:
     ;
 %%
 void utec::compilers::Parser::error(const std::string& msg) {
-    std::cerr << msg << " " /*<< yylineno*/ <<'\n';
+    std::string error = "Error sintáctico en fila: " + std::to_string(row) + ", col: " + std::to_string(col);
+    errors.push_back(error);
+    std::cout << "Error sintáctico:\n";
+    for(std::string &error: errors){
+        std::cout << "\t" << error << "\n";
+    }
+    errors.clear();
 }

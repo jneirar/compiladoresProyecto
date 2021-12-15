@@ -6,11 +6,6 @@
 extern int row;
 extern int col;
 extern SymbolTable symbolTable;
-extern int numero;
-extern std::string texto;
-extern std::string tipo;
-extern std::string operacionRelop;
-extern std::string operacionArit;
 %}
 
 %option c++ interactive noyywrap noyylineno nodefault
@@ -19,29 +14,39 @@ DIGITO  [0-9]
 LETRA   [a-zA-Z]
 %%
 
-entero {tipo = strdup(yytext); std::string text = yytext; col += text.size();  return Parser::token::ENTERO;}
-retorno {std::string text = yytext; col += text.size(); return Parser::token::RETORNO;}
-sin_tipo {tipo = strdup(yytext); std::string text = yytext; col += text.size(); return Parser::token::SIN_TIPO;}
+entero {yylval->build(strdup(yytext)); std::string text = yytext; col += text.size();  return Parser::token::ENTERO;}
+retorno {yylval->build(strdup(yytext)); std::string text = yytext; col += text.size(); return Parser::token::RETORNO;}
+sin_tipo {yylval->build(strdup(yytext)); std::string text = yytext; col += text.size(); return Parser::token::SIN_TIPO;}
 mientras {std::string text = yytext; col += text.size(); return Parser::token::MIENTRAS;}
 si {std::string text = yytext; col += text.size(); return Parser::token::SI;}
 sino {std::string text = yytext; col += text.size(); return Parser::token::SINO;}
-main {std::string text = yytext; col += text.size(); return Parser::token::MAIN;}
 
-{LETRA}+ {texto = strdup(yytext); std::string text = yytext; Symbol symbol(text, row, col); symbolTable.addSymbol(symbol); col += text.size(); return Parser::token::ID;}
-[+-]?{DIGITO}+\.{DIGITO}*[[eE]{DIGITO}+]? {numero = atoi(yytext); std::string text = yytext; col += text.size(); return Parser::token::NUM;}
-[+-]?{DIGITO}+ {numero = atoi(yytext); std::string text = yytext; col += text.size(); return Parser::token::NUM;}
+{LETRA}+ { 
+    yylval->build(strdup(yytext)); 
+    std::string text = yytext; 
+    if(!symbolTable.isSymbol(text)){
+        Symbol* symbol = new Symbol(text, row, col); 
+        symbolTable.addSymbol(symbol); 
+    }
+    col += text.size(); 
+    return Parser::token::ID;}
+[+-]?{DIGITO}+ { 
+    yylval->build(atoi(yytext)); 
+    std::string text = yytext; 
+    col += text.size(); 
+    return Parser::token::NUM;}
 
-"+" {operacionArit = strdup(yytext); col++; return Parser::token::ADDOP;}
-"-" {operacionArit = strdup(yytext); col++; return Parser::token::SUBOP;}
-"*" {operacionArit = strdup(yytext); col++; return Parser::token::MULOP;}
-"/" {operacionArit = strdup(yytext); col++; return Parser::token::DIVOP;}
+"+" {yylval->build(strdup(yytext)); col++; return Parser::token::ADDOP;}
+"-" {yylval->build(strdup(yytext)); col++; return Parser::token::SUBOP;}
+"*" {yylval->build(strdup(yytext)); col++; return Parser::token::MULOP;}
+"/" {yylval->build(strdup(yytext)); col++; return Parser::token::DIVOP;}
 
-"<" {operacionRelop = strdup(yytext); col++; return Parser::token::RELOP;}
-">" {operacionRelop = strdup(yytext); col++; return Parser::token::RELOP;}
-"<=" {operacionRelop = strdup(yytext); col+=2; return Parser::token::RELOP;}
-">=" {operacionRelop = strdup(yytext); col+=2; return Parser::token::RELOP;}
-"==" {operacionRelop = strdup(yytext); col+=2; return Parser::token::RELOP;}
-"!=" {operacionRelop = strdup(yytext); col+=2; return Parser::token::RELOP;}
+"<" {yylval->build(strdup(yytext)); col++; return Parser::token::RELOP;}
+">" {yylval->build(strdup(yytext)); col++; return Parser::token::RELOP;}
+"<=" {yylval->build(strdup(yytext)); col+=2; return Parser::token::RELOP;}
+">=" {yylval->build(strdup(yytext)); col+=2; return Parser::token::RELOP;}
+"==" {yylval->build(strdup(yytext)); col+=2; return Parser::token::RELOP;}
+"!=" {yylval->build(strdup(yytext)); col+=2; return Parser::token::RELOP;}
 
 "=" {col++; return Parser::token::IGUAL;}
 
@@ -65,8 +70,8 @@ main {std::string text = yytext; col += text.size(); return Parser::token::MAIN;
             row++;
 }
 [ ]     {col++;}
-[\t]	{col += 4;}
-.		{ std::cout<<"Error\n"; std::cout << yytext << "(line " << row << " col " << col << ")\n"; std::cerr << "SCANNER \n"; /*yyerror("");*/ exit(1);	}
+[\t]	{col += 2;}
+.		{ std::cout<<"Error léxico\n"; std::cout << yytext << " (line " << row << " col " << col << ")\n"; }
 %%
 
 int yyFlexLexer::yylex() {

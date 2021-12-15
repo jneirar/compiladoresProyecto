@@ -26,10 +26,10 @@ TEST_P(ParamTest, basicTest)
 INSTANTIATE_TEST_SUITE_P(SimpleTest, ParamTest,
                          testing::Values(
                              std::make_pair(
-                                 "sin_tipo fact(entero varA, entero varB []) {\n"
-                                 "si (a==4) retorno;\n"
-                                 "sino a = b;\n"
-                                 "}",
+                                 "sin_tipo main(sin_tipo) {\n"
+                                 "entero a;\n"
+                                 "entero a[4];\n"
+                                 "}\n",
                                  0)
                              /*,std::make_pair(
                                 "entero variable;\n"

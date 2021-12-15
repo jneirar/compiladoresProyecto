@@ -1,8 +1,14 @@
 #pragma once
 
+#include "parser.hpp"
+#include "SymbolTable.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
+
+extern std::vector<std::string> errors;
+extern SymbolTable symbolTable;
+
 class Factor;
 class FactorExpresion;
 class FactorVar;
@@ -40,7 +46,8 @@ class ProgramaNode;
 class Factor
 {
 public:
-    virtual void print(std::string prev) = 0;
+    virtual void print(std::string prev, int localScope) = 0;
+    virtual ~Factor() {}
 };
 class FactorExpresion : public Factor
 {
@@ -49,7 +56,8 @@ private:
 
 public:
     FactorExpresion(ExpresionNode *expresion);
-    void print(std::string prev) override;
+    virtual ~FactorExpresion();
+    void print(std::string prev, int localScope) override;
 };
 class FactorVar : public Factor
 {
@@ -58,7 +66,8 @@ private:
 
 public:
     FactorVar(VarNode *varNode);
-    void print(std::string prev) override;
+    virtual ~FactorVar();
+    void print(std::string prev, int localScope) override;
 };
 class FactorCall : public Factor
 {
@@ -68,7 +77,8 @@ private:
 
 public:
     FactorCall(std::string id, std::vector<ExpresionNode *> lista_arg);
-    void print(std::string prev) override;
+    virtual ~FactorCall();
+    void print(std::string prev, int localScope) override;
 };
 class FactorNum : public Factor
 {
@@ -77,7 +87,8 @@ private:
 
 public:
     FactorNum(int numero);
-    void print(std::string prev) override;
+    virtual ~FactorNum() {}
+    void print(std::string prev, int localScope) override;
 };
 class Term
 {
@@ -87,33 +98,10 @@ private:
     Factor *factor;
 
 public:
-    Term(Term *term, std::string mulop, Factor *factor)
-    {
-        this->term = term;
-        this->mulop = mulop;
-        this->factor = factor;
-    }
-    Term(Factor *factor)
-    {
-        this->term = nullptr;
-        this->mulop = "";
-        this->factor = factor;
-    }
-    void print(std::string prev)
-    {
-        std::cout << prev << "Term. ";
-        if (this->term == nullptr)
-        {
-            std::cout << "Solo factor\n";
-            this->factor->print(prev + "\t");
-        }
-        else
-        {
-            std::cout << this->mulop << "\n";
-            this->term->print(prev + "\t");
-            this->factor->print(prev + "\t");
-        }
-    }
+    Term(Term *term, std::string mulop, Factor *factor);
+    Term(Factor *factor);
+    virtual ~Term();
+    void print(std::string prev, int localScope);
 };
 class ExpresionAditiva
 {
@@ -125,33 +113,10 @@ private:
 public:
     ExpresionAditiva(ExpresionAditiva *expresionAditiva,
                      std::string addop,
-                     Term *term)
-    {
-        this->expresionAditiva = expresionAditiva;
-        this->addop = addop;
-        this->term = term;
-    }
-    ExpresionAditiva(Term *term)
-    {
-        this->expresionAditiva = nullptr;
-        this->addop = "";
-        this->term = term;
-    }
-    void print(std::string prev)
-    {
-        std::cout << prev << "Expresión aditiva. ";
-        if (this->expresionAditiva == nullptr)
-        {
-            std::cout << "Solo term\n";
-            this->term->print(prev + "\t");
-        }
-        else
-        {
-            std::cout << this->addop << "\n";
-            this->expresionAditiva->print(prev + "\t");
-            this->term->print(prev + "\t");
-        }
-    }
+                     Term *term);
+    ExpresionAditiva(Term *term);
+    virtual ~ExpresionAditiva();
+    void print(std::string prev, int localScope);
 };
 
 class VarNodeAux
@@ -161,18 +126,11 @@ private:
     bool esArreglo;
 
 public:
-    VarNodeAux(ExpresionNode *expresion)
-    {
-        this->expresion = expresion;
-        this->esArreglo = true;
-    }
-    VarNodeAux()
-    {
-        this->expresion = nullptr;
-        this->esArreglo = false;
-    }
-    bool getEsArreglo() { return esArreglo; }
-    ExpresionNode *getIndice() { return expresion; }
+    VarNodeAux(ExpresionNode *expresion);
+    VarNodeAux();
+    virtual ~VarNodeAux();
+    bool getEsArreglo();
+    ExpresionNode *getIndice();
 };
 class VarNode
 {
@@ -181,20 +139,19 @@ private:
     VarNodeAux *varNodeAux;
 
 public:
-    VarNode(std::string id, VarNodeAux *varNodeAux)
-    {
-        this->id = id;
-        this->varNodeAux = varNodeAux;
-    }
-    std::string getId() { return id; }
-    ExpresionNode *getIndice() { return varNodeAux->getIndice(); }
-    bool getEsArreglo() { return varNodeAux->getEsArreglo(); }
+    VarNode(std::string id, VarNodeAux *varNodeAux);
+    virtual ~VarNode();
+    std::string getId();
+    ExpresionNode *getIndice();
+    bool getEsArreglo();
+    void evaluate(int localScope);
 };
 
 class ExpresionNode
 {
 public:
-    virtual void print(std::string prev) = 0;
+    virtual void print(std::string prev, int localScope) = 0;
+    virtual ~ExpresionNode(){};
 };
 class ExpresionAsignacionNode : public ExpresionNode
 {
@@ -207,7 +164,8 @@ private:
 public:
     ExpresionAsignacionNode(std::string id, ExpresionNode *expresion);
     ExpresionAsignacionNode(std::string id, ExpresionNode *expresion, ExpresionNode *indice);
-    void print(std::string prev) override;
+    virtual ~ExpresionAsignacionNode();
+    void print(std::string prev, int localScope) override;
 };
 
 class ExpresionSimpleAux
@@ -220,6 +178,7 @@ public:
     ExpresionSimpleAux(std::string relop,
                        ExpresionAditiva *expresionAditiva);
     ExpresionSimpleAux();
+    virtual ~ExpresionSimpleAux();
     std::string getRelop();
     ExpresionAditiva *getExpresionAditiva();
 };
@@ -233,13 +192,15 @@ private:
 public:
     ExpresionSimple(ExpresionAditiva *expresionAditiva);
     ExpresionSimple(ExpresionAditiva *expresionAditiva1, std::string relop, ExpresionAditiva *expresionAditiva2);
-    void print(std::string prev) override;
+    virtual ~ExpresionSimple();
+    void print(std::string prev, int localScope) override;
 };
 
 class SentenciaNode
 {
 public:
-    virtual void print(std::string prev) = 0;
+    virtual void print(std::string prev, int localScope) = 0;
+    virtual ~SentenciaNode() {}
 };
 class SentenciaExpresionNode : public SentenciaNode
 {
@@ -247,13 +208,10 @@ private:
     ExpresionNode *expresion;
 
 public:
-    SentenciaExpresionNode(ExpresionNode *expresion) { this->expresion = expresion; }
-    SentenciaExpresionNode() { this->expresion = nullptr; }
-    void print(std::string prev) override
-    {
-        std::cout << prev << "Sentencia Expresión\n";
-        this->expresion->print(prev + "\t");
-    }
+    SentenciaExpresionNode(ExpresionNode *expresion);
+    SentenciaExpresionNode();
+    virtual ~SentenciaExpresionNode();
+    void print(std::string prev, int localScope) override;
 };
 class SentenciaSeleccionNode : public SentenciaNode
 {
@@ -264,37 +222,12 @@ private:
 
 public:
     SentenciaSeleccionNode(ExpresionNode *expresionNode,
-                           SentenciaNode *sentencia)
-    {
-        this->expresionNode = expresionNode;
-        this->sentencia = sentencia;
-        this->sentenciaElse = nullptr;
-    }
+                           SentenciaNode *sentencia);
     SentenciaSeleccionNode(ExpresionNode *expresionNode,
                            SentenciaNode *sentencia,
-                           SentenciaNode *sentenciaElse)
-    {
-        this->expresionNode = expresionNode;
-        this->sentencia = sentencia;
-        this->sentenciaElse = sentenciaElse;
-    }
-
-    void print(std::string prev) override
-    {
-        std::cout << prev << "Sentencia Selección\n";
-        std::cout << prev + "\t"
-                  << "Expresión de condición\n";
-        this->expresionNode->print(prev + "\t\t");
-        std::cout << prev + "\t"
-                  << "Sentencia Then\n";
-        this->sentencia->print(prev + "\t\t");
-        if (this->sentenciaElse != nullptr)
-        {
-            std::cout << prev + "\t"
-                      << "Sentencia Else\n";
-            this->sentenciaElse->print(prev + "\t\t");
-        }
-    }
+                           SentenciaNode *sentenciaElse);
+    virtual ~SentenciaSeleccionNode();
+    void print(std::string prev, int localScope) override;
 };
 class SentenciaIteracionNode : public SentenciaNode
 {
@@ -304,25 +237,9 @@ private:
 
 public:
     SentenciaIteracionNode(ExpresionNode *expresion,
-                           std::vector<SentenciaNode *> sentencias)
-    {
-        this->expresion = expresion;
-        this->sentencias = sentencias;
-    }
-    void print(std::string prev) override
-    {
-        std::cout << prev << "\tSentencia Iteración\n";
-        std::cout << prev << "\tExpresión de condición:\n";
-        this->expresion->print(prev + "\t\t");
-        std::cout << prev << "\tSentencias de iteración: " << this->sentencias.size() << "\n";
-        int i = 1;
-        for (SentenciaNode *&sentencia : sentencias)
-        {
-            std::cout << prev + "\t"
-                      << "Sentencia " << i++ << ":";
-            sentencia->print(prev + "\t\t");
-        }
-    }
+                           std::vector<SentenciaNode *> sentencias);
+    virtual ~SentenciaIteracionNode();
+    void print(std::string prev, int localScope) override;
 };
 class SentenciaRetornoNode : public SentenciaNode
 {
@@ -330,25 +247,10 @@ private:
     ExpresionNode *expresion;
 
 public:
-    SentenciaRetornoNode()
-    {
-        this->expresion = nullptr;
-    }
-    SentenciaRetornoNode(ExpresionNode *expresion)
-    {
-        this->expresion = expresion;
-    }
-    void print(std::string prev) override
-    {
-        std::cout << prev << "Sentencia Retorno\n";
-        if (this->expresion == nullptr)
-            std::cout << prev + "\tNo retorna nada\n";
-        else
-        {
-            std::cout << prev + "\tRetorna una expresión\n";
-            this->expresion->print(prev + "\t");
-        }
-    }
+    SentenciaRetornoNode();
+    SentenciaRetornoNode(ExpresionNode *expresion);
+    virtual ~SentenciaRetornoNode();
+    void print(std::string prev, int localScope) override;
 };
 
 class SentCompuestaNode
@@ -359,7 +261,8 @@ private:
 
 public:
     SentCompuestaNode(std::vector<DeclaracionVarNode *> declaracionesLocales, std::vector<SentenciaNode *> sentencias);
-    void print(std::string prev);
+    virtual ~SentCompuestaNode();
+    void print(std::string prev, int localScope);
 };
 
 class ParamNodeAux
@@ -369,6 +272,7 @@ private:
 
 public:
     ParamNodeAux(bool esArreglo) { this->esArreglo = esArreglo; }
+    virtual ~ParamNodeAux() {}
     bool getArreglo() { return esArreglo; }
 };
 class ParamNode
@@ -385,8 +289,21 @@ public:
         this->tipo = tipo;
         this->esArreglo = esArreglo;
     }
-    void print(std::string prev, int i)
+    virtual ~ParamNode() {}
+    void print(std::string prev, int i, int localScope)
     {
+        if (symbolTable.isSymbol(nombre))
+        {
+            Symbol *&symbol = symbolTable.getSymbol(nombre);
+            symbol->type = tipo;
+            symbol->isArray = esArreglo;
+            if (symbol->scope.count(localScope))
+                errors.push_back("Symbol " + nombre + " already declared");
+            else
+                symbol->scope.insert(localScope);
+        }
+        else
+            errors.push_back("Symbol " + nombre + " not founded\n");
         std::cout << prev << "Param " << i;
         if (this->esArreglo)
             std::cout << " es arreglo.\t";
@@ -404,6 +321,7 @@ public:
     virtual int getSize() { return 0; };
     virtual std::vector<ParamNode *> getParams() { return {}; };
     virtual SentCompuestaNode *getSentCompuestaNode() { return nullptr; };
+    virtual ~DeclaracionNodeAux() {}
 };
 class DeclaracionVarNodeAux : public DeclaracionNodeAux
 {
@@ -425,6 +343,7 @@ public:
         this->esArreglo = true;
         this->size = size;
     }
+    virtual ~DeclaracionVarNodeAux() {}
     virtual bool getEsArreglo() { return this->esArreglo; }
     int getSize() { return this->size; }
     bool getEsVarNode() override { return this->esVarNode; }
@@ -444,6 +363,24 @@ public:
         this->sentCompuestaNode = sentCompuestaNode;
         this->esVarNode = false;
     }
+    virtual ~DeclaracionFunNodeAux()
+    {
+        for (int i = 0; i < params.size(); i++)
+        {
+            if (params[i])
+            {
+                delete params[i];
+                params[i] = nullptr;
+            }
+        }
+
+        params.clear();
+        if (sentCompuestaNode)
+        {
+            delete sentCompuestaNode;
+            sentCompuestaNode = nullptr;
+        }
+    }
     std::vector<ParamNode *> getParams() { return this->params; }
     SentCompuestaNode *getSentCompuestaNode() { return this->sentCompuestaNode; }
     bool getEsVarNode() override { return this->esVarNode; }
@@ -452,7 +389,8 @@ public:
 class DeclaracionNode
 {
 public:
-    virtual void print(std::string prev) = 0;
+    virtual void print(std::string prev, int localScope) = 0;
+    virtual ~DeclaracionNode() {}
 };
 class DeclaracionVarNode : public DeclaracionNode
 {
@@ -465,7 +403,8 @@ private:
 public:
     DeclaracionVarNode(std::string id);
     DeclaracionVarNode(std::string id, int size);
-    void print(std::string prev) override;
+    void print(std::string prev, int localScope) override;
+    virtual ~DeclaracionVarNode() {}
 };
 
 class DeclaracionFunNode : public DeclaracionNode
@@ -484,14 +423,39 @@ public:
         this->params = params;
         this->sentCompuestaNode = sentCompuestaNode;
     }
-    void print(std::string prev) override
+    virtual ~DeclaracionFunNode()
     {
+        for (int i = 0; i < params.size(); i++)
+        {
+            if (params[i])
+            {
+                delete params[i];
+                params[i] = nullptr;
+            }
+        }
+        params.clear();
+        delete sentCompuestaNode;
+    }
+    void print(std::string prev, int localScope) override
+    {
+        if (symbolTable.isSymbol(id))
+        {
+            Symbol *&symbol = symbolTable.getSymbol(id);
+            symbol->type = tipo;
+            symbol->isFunction = true;
+            if (symbol->scope.count(localScope))
+                errors.push_back("Symbol " + id + " already declared");
+            else
+                symbol->scope.insert(localScope);
+        }
+        else
+            errors.push_back("Symbol " + id + " not founded\n");
         std::cout << prev << "Declaración Fun\tID=" << this->id << "\tTipo=" << this->tipo;
         std::cout << prev << "Tiene " << params.size() << " parámetro(s)\n";
         int i = 1;
         for (ParamNode *&param : params)
-            param->print(prev + "\t", i++);
-        this->sentCompuestaNode->print(prev);
+            param->print(prev + "\t", i++, localScope + 1);
+        this->sentCompuestaNode->print(prev, localScope + 1);
     }
 };
 
@@ -505,12 +469,26 @@ public:
     {
         this->declaraciones = declaraciones;
     }
+    virtual ~ProgramaNode()
+    {
+        for (int i = 0; i < declaraciones.size(); i++)
+        {
+            if (declaraciones[i])
+            {
+                delete declaraciones[i];
+                declaraciones[i] = nullptr;
+            }
+        }
+        declaraciones.clear();
+    }
     void print()
     {
+        int scope = 0;
         std::cout << "Programa\n";
         std::cout << "Declaraciones: " << declaraciones.size() << "\n";
         for (DeclaracionNode *&declaracion : this->declaraciones)
-            declaracion->print("\t");
+            declaracion->print("\t", scope);
         std::cout << "Fin Programa\n\n";
+        scope = 0;
     }
 };
